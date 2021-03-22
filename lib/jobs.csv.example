@@ -1,0 +1,4 @@
+content_image_path,style_image_path,cols,rows,use_tiled_style_image,use_fluid_blend,edge_size,magnitude,content_blending_ratio
+prettyearth\1568.jpg,alex-grey\wp2705517-alex-grey-backgrounds-desktop.jpg,,,,,,,0.3
+prettyearth\1568.jpg,alex-grey\wp2705517-alex-grey-backgrounds-desktop.jpg,,,,,,,"[0.3,0.5]"
+"['prettyearth\\1568.jpg','prettyearth\\0000.jpg']",alex-grey\wp2705517-alex-grey-backgrounds-desktop.jpg,,,,,,,"[0.3,0.5]"

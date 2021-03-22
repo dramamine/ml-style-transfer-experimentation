@@ -2,16 +2,16 @@ import os, random
 import time
 import style_transfer_utils as sxu
 
-content_folder = "E:\\images\\prettyearth"
-style_folder = "E:\\images\\mtg"
-output_directory = "E:\\git\\style-transfer-hd"
+content_folder = "F:\\Google Drive\\images\\prettyearth\\"
+style_folder = "F:\\Google Drive\\images\\mtg\\"
+output_directory = "F:\\Google Drive\\images\\generated-20210321\\"
 
-def does_file_already_exist(params):
-  return os.path.isfile(output_directory + "\\" + filename)
+def does_file_already_exist(filename):
+  return os.path.isfile(output_directory + filename)
 
 def dream():
-  content_image_path = random.choice(os.listdir(content_folder))
-  style_image_path = random.choice(os.listdir(style_folder))
+  content_image_path = content_folder + random.choice(os.listdir(content_folder))
+  style_image_path = style_folder + random.choice(os.listdir(style_folder))
   # print(content_image_path)
   # print(style_image_path)
   params = dict(
@@ -24,7 +24,8 @@ def dream():
     use_fluid_blend=True,
     edge_size=8,
     magnitude=2,
-    content_blending_ratio=0.5
+    content_blending_ratio=0.5,
+    output_directory=output_directory
   )
 
   if does_file_already_exist(sxu.get_output_filename(**params)):

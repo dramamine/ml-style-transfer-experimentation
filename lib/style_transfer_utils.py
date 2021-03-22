@@ -3,7 +3,7 @@ import tensorflow as tf
 import numpy as np
 import math
 from PIL import Image
-
+from types import SimpleNamespace
 
 style_predict_path = tf.keras.utils.get_file(
     'style_predict.tflite', 'https://tfhub.dev/sayakpaul/lite-model/arbitrary-image-stylization-inceptionv3/int8/predict/1?lite-format=tflite')

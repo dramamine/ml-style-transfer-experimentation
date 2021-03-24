@@ -1,10 +1,13 @@
-# import marten_style_transfer_hd_fluid_edges
 import csv
 import os
 import datetime
-import style_transfer_utils
+import style_transfer_utils as sxu
 import hashlib
 from ast import literal_eval
+
+content_directory = "F:\\Google Drive\\images\\"
+style_directory = "F:\\Google Drive\\images\\"
+output_directory = "F:\\Google Drive\\images\\generated-20210323-hd\\"
 
 
 def does_file_already_exist(params):
@@ -27,16 +30,27 @@ def generate_stupid_hash(x, y):
   return "{0}-{1}".format(nums, hex_string)
 
 def add_defaults(data):
+  data['output_directory'] = output_directory
   if not data['cols']:
     data['cols'] = 1
+  else:
+    data['cols'] = int(data['cols'])
   if not data['rows']:
     data['rows'] = 1 
+  else:
+    data['rows'] = int(data['rows'])
+
   data['use_tiled_style_image'] = data['use_tiled_style_image'] == "True"
   data['use_fluid_blend'] = not data['use_fluid_blend'] == "False"
   if not data['edge_size']:
     data['edge_size'] = 8 
+  else:
+    data['edge_size'] = int(data['edge_size'])
+
   if not data['magnitude']:
     data['magnitude'] = 2
+  else:
+    data['magnitude'] = int(data['magnitude'])
   # if not data['content_blending_ratio']:
   #   data['content_blending_ratio'] = 0.5
   # else:
@@ -50,7 +64,6 @@ def add_defaults(data):
 
 def as_array(msg):
   if isinstance(msg, str) and '[' in msg:
-    print("going to literal eval this:", msg)
     return literal_eval(msg)
   return [msg]
 
@@ -64,20 +77,20 @@ with open('jobs.csv') as csvfile:
 
     for content_image_path in row['content_image_paths']:
       for style_image_path in row['style_image_paths']:
-        for content_blending_ratio in row['content_blending_ratios']:
+        #for content_blending_ratio in row['content_blending_ratios']:
           
-          row['content_image_path'] = content_image_path
-          row['style_image_path'] = style_image_path
-          row['content_blending_ratio'] = content_blending_ratio
+        row['content_image_path'] = content_directory+content_image_path
+        row['style_image_path'] = style_directory+style_image_path
+        #row['content_blending_ratio'] = content_blending_ratio
 
-          if does_file_already_exist(row):
-            continue
-          print(datetime.datetime.now())
-          # marten_style_transfer_hd_fluid_edges.run(**row, drive_base="G:\\Google Drive\\images\\")
-          
-          name = style_transfer_utils.get_output_filename(**row)
-          # gsh = generate_stupid_hash( row['content_image_path'], row['style_image_path'] )
-          print(name)
-          # print(gsh)
+        if does_file_already_exist(row):
+          continue
+        print(datetime.datetime.now())
+        sxu.run(**row)
+        
+        #name = sxu.get_output_filename(**row)
+        # gsh = generate_stupid_hash( row['content_image_path'], row['style_image_path'] )
+        #   print(name)
+        # print(gsh)
     
 print("queue complete.")

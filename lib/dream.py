@@ -21,7 +21,7 @@ def dream():
     rows=1,
     cols=1,
     use_tiled_style_image=False,
-    use_fluid_blend=True,
+    use_fluid_blend=False,
     edge_size=8,
     magnitude=2,
     content_blending_ratio=0.5,
@@ -36,4 +36,4 @@ def dream():
 
 while True:
   dream()
-  time.sleep(5)
+  time.sleep(1)

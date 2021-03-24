@@ -13,11 +13,6 @@ style_transform_path = style_transform_path = tf.keras.utils.get_file(
 STYLE_SIZE = 256
 CONTENT_SIZE = 384
 
-def imshow(image, title=None):
-  plt.imshow(image)
-  if title:
-    plt.title(title)
-
 def get_array_of_pieces(img, cfg):
   cols = cfg.cols
   rows = cfg.rows
@@ -54,7 +49,7 @@ def get_intermediate_tiles(img, cfg):
 
   row_pieces = []
   column_pieces = []
-  # print(title,"image size:", img.size)
+
   w = math.floor(img.size[0]/cols)
   h = math.floor(img.size[1]/rows)
 
@@ -84,15 +79,12 @@ def get_intermediate_tiles(img, cfg):
 
   return [row_pieces, column_pieces]
 
-
 def load_img(path_to_img):
   img = tf.io.read_file(path_to_img)
   img = tf.io.decode_image(img, channels=3)
   img = tf.image.convert_image_dtype(img, tf.float32)
   img = img[tf.newaxis, :]
   return img
-
-
 
 # Function to load an image from a file, and add a batch dimension.
 def load_content_img(image_pixels):
@@ -115,23 +107,7 @@ def load_content_img(image_pixels):
     print('Exception not thrown')
 
 
-
-# Function to pre-process by resizing an central cropping it.
-def preprocess_image(image, target_dim):
-  # Resize the image so that the shorter dimension becomes 256px.
-  shape = tf.cast(tf.shape(image)[1:-1], tf.float32)
-  short_dim = min(shape)
-  scale = target_dim / short_dim
-  new_shape = tf.cast(shape * scale, tf.int32)
-  image = tf.image.resize(image, new_shape)
-
-  # Central crop the image.
-  image = tf.image.resize_with_crop_or_pad(image, target_dim, target_dim)
-
-  return image
-
 # Function to run style prediction on preprocessed style image.
-
 def run_style_predict(preprocessed_style_image):
   # Load the model.
   interpreter = tf.lite.Interpreter(model_path=style_predict_path)
@@ -149,12 +125,23 @@ def run_style_predict(preprocessed_style_image):
   # print('Style Bottleneck Shape:', style_bottleneck.shape)
   return style_bottleneck
 
+# Function to pre-process by resizing an central cropping it.
+def preprocess_image(image, target_dim):
+  # Resize the image so that the shorter dimension becomes 256px.
+  shape = tf.cast(tf.shape(image)[1:-1], tf.float32)
+  short_dim = min(shape)
+  scale = target_dim / short_dim
+  new_shape = tf.cast(shape * scale, tf.int32)
+  image = tf.image.resize(image, new_shape)
+
+  # Central crop the image.
+  image = tf.image.resize_with_crop_or_pad(image, target_dim, target_dim)
+
+  return image
+
 def preprocessor(img, res):
   img = load_content_img(np.array(img))
   return preprocess_image(img, res)
-
-
-
 
 def run_style_transform(style_bottleneck, preprocessed_content_image):
   # Load the model.
@@ -180,7 +167,6 @@ def run_style_transform(style_bottleneck, preprocessed_content_image):
 
   return stylized_image
 
-
 def stylize(preprocessed_content_image, style_bottleneck, style_bottleneck_content, content_blending_ratio):
   # Blend the style bottleneck of style image and content image
   style_bottleneck_blended = content_blending_ratio * style_bottleneck_content \
@@ -193,7 +179,6 @@ def stylize(preprocessed_content_image, style_bottleneck, style_bottleneck_conte
   print('🐌', end="")
   return stylized_image
 
-
 def sigmoid(x):
   y = np.zeros(len(x))
   for i in range(len(x)):
@@ -205,8 +190,6 @@ def sigmoid(x):
 # magnitude: the strength of the sigmoid - higher values = sharper transition.
 #            must be >0, increases above 100 don't make much difference
 # flip: if true, values change across the y-axis
-
-
 def generate_sigmoid(size, magnitude=6, flip=False):
   m = magnitude/10
   sigmoid_ = sigmoid(np.concatenate((np.arange(-m, m, 4*m/size),
@@ -239,11 +222,7 @@ def sew(stylized_pieces, cfg):
       eu = 0 if r == 0 else edge_size
       ed = 0 if r == rows-1 else edge_size
 
-      print("imaged size:")
-      print(imaged.size)
       cropped = imaged.crop((el, eu, wh-er, wh-ed))
-      print("cropped size:")
-      print(cropped.size)
 
       im.paste(cropped, (
           c*wh - max(0, (2*c-1)*el),  # left
@@ -274,6 +253,7 @@ def apply_row_joints(orig, joints, cfg):
 
       cropped = imaged.crop((el, eu, wh-er, wh-ed))
 
+      # blackbox shows you the waveform of what gets converted
       # blackbox = Image.new('RGB', cropped.size, 0)
       updated_image.paste(cropped, (
           int((0.5+c)*wh - (0.5*edge_size + 1.5*edge_size*c)),  # left
@@ -305,6 +285,7 @@ def apply_column_joints(orig, joints, cfg):
 
       cropped = imaged.crop((el, eu, wh-er, wh-ed))
 
+      # blackbox shows you the waveform of what gets converted
       # blackbox = Image.new('RGB', cropped.size, 0)
       updated_image.paste(cropped, (
           c*wh - max(0, (2*c-1)*el),  # left
@@ -314,13 +295,16 @@ def apply_column_joints(orig, joints, cfg):
 
 def get_nice_name(path):
   output = path
+
   try:
+    # unix
     output = re.search(r'.*\\(.*).jpg', path).group(1)
   except AttributeError:
     try:
+      # windows
       output = re.search(r'.*/(.*).jpg', path).group(1)
     except AttributeError:
-        print("made it to here.")
+        # no directory slashes
         output = re.search(r'(.*).jpg', path).group(1)
 
   return output
@@ -344,25 +328,29 @@ def get_output_filename(content_image_path, style_image_path,
   )
   return output
 
-
 def run(
-    drive_base,
     content_image_path,
     style_image_path,
     output_directory,
-    cols=4,
-    rows=3,
+    drive_base="",
+    cols=1,
+    rows=1,
     use_tiled_style_image=False,
     use_fluid_blend=True,
-    edge_size=4,
-    magnitude=6,
+    edge_size=8,
+    magnitude=60,
     content_blending_ratio=0.5,
+    content_blending_ratios=[],
+    **kwargs
 ):
-  # time.sleep(1)
-  print("did a thing")
   config = dict(cols=cols, rows=rows, edge_size=edge_size,
                 magnitude=magnitude, content_size=CONTENT_SIZE, style_size=STYLE_SIZE)
   config = SimpleNamespace(**config)
+  # print(content_blending_ratios)
+  # return
+
+  if len(content_blending_ratios) == 0:
+    content_blending_ratios = [content_blending_ratio]
 
   content_image = Image.open(drive_base+content_image_path)
   style_image = Image.open(drive_base+style_image_path)
@@ -393,32 +381,37 @@ def run(
 
   print("Processing", len(preprocessed_content_pieces), "cells of content...")
 
-  if use_tiled_style_image:
-    stylized_pieces = list(map(lambda x, y, z: stylize(
-        x, y, z, content_blending_ratio), preprocessed_content_pieces, style_bottlenecks, style_bottleneck_contents))
-  else:
-    stylized_pieces = list(map(lambda x, z: stylize(
-        x, style_bottlenecks[0], z, content_blending_ratio), preprocessed_content_pieces, style_bottleneck_contents))
+  # loop for crankin out more blends
+  for content_blending_ratio in content_blending_ratios:
+    print("looping for content ratio:", content_blending_ratio)
+    if use_tiled_style_image:
+      stylized_pieces = list(map(lambda x, y, z: stylize(
+          x, y, z, content_blending_ratio), preprocessed_content_pieces, style_bottlenecks, style_bottleneck_contents))
+    else:
+      stylized_pieces = list(map(lambda x, z: stylize(
+          x, style_bottlenecks[0], z, content_blending_ratio), preprocessed_content_pieces, style_bottleneck_contents))
 
-  image = sew(stylized_pieces, config)
+    image = sew(stylized_pieces, config)
 
-  if use_fluid_blend:
-    row_joints = stylized_pieces[(rows*cols):(rows*cols+rows*(cols-1))]
-    column_joints = stylized_pieces[(rows*cols+rows*(cols-1)):]
-    image = apply_column_joints(
-        apply_row_joints(image, row_joints, config), column_joints, config)
+    if use_fluid_blend:
+      row_joints = stylized_pieces[(rows*cols):(rows*cols+rows*(cols-1))]
+      column_joints = stylized_pieces[(rows*cols+rows*(cols-1)):]
+      image = apply_column_joints(
+          apply_row_joints(image, row_joints, config), column_joints, config)
 
-  output_filename = "{0}/{1}".format(output_directory, get_output_filename(
-      content_image_path=content_image_path,
-      style_image_path=style_image_path,
-      content_blending_ratio=content_blending_ratio,
-      rows=rows,
-      cols=cols,
-      edge_size=edge_size,
-      use_tiled_style_image=use_tiled_style_image,
-      use_fluid_blend=use_fluid_blend,
-      magnitude=magnitude
-  ))
-  image.save(output_filename, "JPEG")
-  print("Saved to:", output_filename)
+    output_filename = "{0}/{1}".format(output_directory, get_output_filename(
+        content_image_path=content_image_path,
+        style_image_path=style_image_path,
+        content_blending_ratio=content_blending_ratio,
+        rows=rows,
+        cols=cols,
+        edge_size=edge_size,
+        use_tiled_style_image=use_tiled_style_image,
+        use_fluid_blend=use_fluid_blend,
+        magnitude=magnitude
+    ))
+    image.save(output_filename, "JPEG")
+    print("Saved to:", output_filename)
+
+  # note that this is only the final image if you used multiple blending ratios
   return image

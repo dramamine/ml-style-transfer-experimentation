@@ -189,17 +189,25 @@ def sigmoid(x):
 # size: the width and height in pixels
 # magnitude: the strength of the sigmoid - higher values = sharper transition.
 #            must be >0, increases above 100 don't make much difference
+# squeeze: on the outer sides of the sigmoid, have a dead zone. ex. a squeeze
+#          of half the size means we'll vary the pixels by the sigmoid function
+#          of the inner half of the tile only. this should probably be a multiple
+#          of two or maybe everything will break??
 # flip: if true, values change across the y-axis
-def generate_sigmoid(size, magnitude=6, flip=False):
+def generate_sigmoid(size, magnitude=6, squeeze=0, flip=False):
   m = magnitude/10
-  sigmoid_ = sigmoid(np.concatenate((np.arange(-m, m, 4*m/size),
-                                     np.arange(m, -m, -4*m/size))))
+  adj_size = size-squeeze
+  sigmoid_ = sigmoid(np.concatenate((
+      np.repeat(-m, squeeze/2),
+      np.arange(-m, m, 4*m/adj_size),
+      np.arange(m, -m, -4*m/adj_size),
+      np.repeat(-m, squeeze/2)
+  )))
   alpha = np.repeat(sigmoid_.reshape((len(sigmoid_), 1)), repeats=size, axis=1)
   if flip:
     alpha = np.swapaxes(alpha, 0, 1)
   res = Image.fromarray(np.uint8(alpha), 'L')
   return res
-
 
 def sew(stylized_pieces, cfg):
   cols = cfg.cols
@@ -236,9 +244,10 @@ def apply_row_joints(orig, joints, cfg):
   edge_size = cfg.edge_size
   wh = cfg.content_size
   magnitude = cfg.magnitude
+  squeeze = cfg.squeeze
 
   updated_image = orig.copy()
-  mask = generate_sigmoid(384, magnitude, True)
+  mask = generate_sigmoid(384, magnitude, squeeze, True)
   assert(rows*(cols-1) == len(joints))
 
   for r in range(0, rows):
@@ -267,10 +276,11 @@ def apply_column_joints(orig, joints, cfg):
   rows = cfg.rows
   edge_size = cfg.edge_size
   wh = cfg.content_size
+  squeeze = cfg.squeeze
   magnitude = cfg.magnitude
 
   updated_image = orig.copy()
-  mask = generate_sigmoid(384, magnitude, False)
+  mask = generate_sigmoid(384, magnitude, squeeze, False)
   assert(((rows-1)*cols) == len(joints))
 
   for r in range(0, rows-1):
@@ -312,7 +322,7 @@ def get_nice_name(path):
 def get_output_filename(content_image_path, style_image_path, 
                         content_blending_ratio, edge_size,
                         cols, rows,
-                        use_tiled_style_image, use_fluid_blend, magnitude,
+                        use_tiled_style_image, use_fluid_blend, magnitude, squeeze,
                         extra_id="", **kwargs):
   content_blending_ratio = float(content_blending_ratio)
   output = "{0}-{1}-hd-fusion-{2}x{3}-blend{4}-edge{5}{6}{7}{8}.jpg".format(
@@ -323,7 +333,7 @@ def get_output_filename(content_image_path, style_image_path,
       int(10*content_blending_ratio),
       edge_size,
       "-tiled" if use_tiled_style_image else "",
-      "-fluid{0}".format(magnitude) if use_fluid_blend else "",
+      "-fluid{0}-sq{1}".format(magnitude, squeeze) if use_fluid_blend else "",
       extra_id
   )
   return output
@@ -339,6 +349,7 @@ def run(
     use_fluid_blend=True,
     edge_size=8,
     magnitude=60,
+    squeeze=0,
     content_blending_ratio=0.5,
     content_blending_ratios=[],
     **kwargs
@@ -346,8 +357,6 @@ def run(
   config = dict(cols=cols, rows=rows, edge_size=edge_size,
                 magnitude=magnitude, content_size=CONTENT_SIZE, style_size=STYLE_SIZE)
   config = SimpleNamespace(**config)
-  # print(content_blending_ratios)
-  # return
 
   if len(content_blending_ratios) == 0:
     content_blending_ratios = [content_blending_ratio]
@@ -363,7 +372,6 @@ def run(
 
   if use_fluid_blend:
     (row_joints, col_joints) = get_intermediate_tiles(content_image, config)
-    # print("Row joints:", len(row_joints), "Col joints:", len(col_joints))
     content_pieces.extend(row_joints)
     content_pieces.extend(col_joints)
 
@@ -408,7 +416,8 @@ def run(
         edge_size=edge_size,
         use_tiled_style_image=use_tiled_style_image,
         use_fluid_blend=use_fluid_blend,
-        magnitude=magnitude
+        magnitude=magnitude,
+        squeeze=squeeze
     ))
     image.save(output_filename, "JPEG")
     print("Saved to:", output_filename)

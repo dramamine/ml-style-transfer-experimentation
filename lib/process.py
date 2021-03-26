@@ -7,14 +7,14 @@ from ast import literal_eval
 
 content_directory = "F:\\Google Drive\\images\\"
 style_directory = "F:\\Google Drive\\images\\"
-output_directory = "F:\\Google Drive\\images\\generated-20210323-hd\\"
+output_directory = "F:\\Google Drive\\images\\generated-{0}-hd\\".format( datetime.datetime.now().strftime("%Y%m%d") )
 
+if not os.path.isdir(output_directory):
+  os.mkdir(output_directory)
 
 def does_file_already_exist(params):
-  # @TODO call file-naming-function
-  filename = 'process.py'
-  return False
-  #return os.path.isfile(filename)
+  filename = sxu.get_output_filename(**row)
+  return os.path.isfile(output_directory+filename)
 
 def get_nums(s):
   valids = []
@@ -51,6 +51,11 @@ def add_defaults(data):
     data['magnitude'] = 2
   else:
     data['magnitude'] = int(data['magnitude'])
+
+  if not data['squeeze']:
+    data['squeeze'] = 0
+  else:
+    data['squeeze'] = int(data['magnitude'])
   # if not data['content_blending_ratio']:
   #   data['content_blending_ratio'] = 0.5
   # else:
@@ -87,10 +92,5 @@ with open('jobs.csv') as csvfile:
           continue
         print(datetime.datetime.now())
         sxu.run(**row)
-        
-        #name = sxu.get_output_filename(**row)
-        # gsh = generate_stupid_hash( row['content_image_path'], row['style_image_path'] )
-        #   print(name)
-        # print(gsh)
     
 print("queue complete.")

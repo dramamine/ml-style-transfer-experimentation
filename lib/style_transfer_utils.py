@@ -354,7 +354,7 @@ def run(
     content_blending_ratios=[],
     **kwargs
 ):
-  config = dict(cols=cols, rows=rows, edge_size=edge_size,
+  config = dict(cols=cols, rows=rows, edge_size=edge_size, squeeze=squeeze,
                 magnitude=magnitude, content_size=CONTENT_SIZE, style_size=STYLE_SIZE)
   config = SimpleNamespace(**config)
 
@@ -391,7 +391,7 @@ def run(
 
   # loop for crankin out more blends
   for content_blending_ratio in content_blending_ratios:
-    print("looping for content ratio:", content_blending_ratio)
+    content_blending_ratio = float(content_blending_ratio)
     if use_tiled_style_image:
       stylized_pieces = list(map(lambda x, y, z: stylize(
           x, y, z, content_blending_ratio), preprocessed_content_pieces, style_bottlenecks, style_bottleneck_contents))
@@ -400,7 +400,6 @@ def run(
           x, style_bottlenecks[0], z, content_blending_ratio), preprocessed_content_pieces, style_bottleneck_contents))
 
     image = sew(stylized_pieces, config)
-
     if use_fluid_blend:
       row_joints = stylized_pieces[(rows*cols):(rows*cols+rows*(cols-1))]
       column_joints = stylized_pieces[(rows*cols+rows*(cols-1)):]

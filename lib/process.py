@@ -55,7 +55,7 @@ def add_defaults(data):
   if not data['squeeze']:
     data['squeeze'] = 0
   else:
-    data['squeeze'] = int(data['magnitude'])
+    data['squeeze'] = int(data['squeeze'])
   # if not data['content_blending_ratio']:
   #   data['content_blending_ratio'] = 0.5
   # else:

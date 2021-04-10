@@ -325,7 +325,7 @@ def get_output_filename(content_image_path, style_image_path,
                         use_tiled_style_image, use_fluid_blend, magnitude, squeeze,
                         extra_id="", **kwargs):
   content_blending_ratio = float(content_blending_ratio)
-  output = "{0}-{1}-hd-fusion-{2}x{3}-blend{4}-edge{5}{6}{7}{8}.jpg".format(
+  output = "{0}+{1}-hd-fusion-{2}x{3}-blend{4}-edge{5}{6}{7}{8}.jpg".format(
       get_nice_name(content_image_path),
       get_nice_name(style_image_path),
       cols, 

@@ -24,6 +24,7 @@ def dream():
     use_fluid_blend=False,
     edge_size=8,
     magnitude=2,
+    squeeze=0,
     content_blending_ratio=0.5,
     output_directory=output_directory
   )

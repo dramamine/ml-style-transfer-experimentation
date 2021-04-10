@@ -194,7 +194,7 @@ def sigmoid(x):
 #          of the inner half of the tile only. this should probably be a multiple
 #          of two or maybe everything will break??
 # flip: if true, values change across the y-axis
-def generate_sigmoid(size, magnitude=6, squeeze=0, flip=False):
+def generate_sigmoid(size, magnitude, squeeze, flip=False):
   m = magnitude/10
   adj_size = size-squeeze
   sigmoid_ = sigmoid(np.concatenate((
@@ -320,18 +320,18 @@ def get_nice_name(path):
   return output
 
 def get_output_filename(content_image_path, style_image_path, 
-                        content_blending_ratio, edge_size,
-                        cols, rows,
-                        use_tiled_style_image, use_fluid_blend, magnitude, squeeze,
+                        content_blending_ratio, cols, rows,
+                        edge_size, use_tiled_style_image, use_fluid_blend, 
+                        magnitude, squeeze,
                         extra_id="", **kwargs):
   content_blending_ratio = float(content_blending_ratio)
-  output = "{0}-{1}-hd-fusion-{2}x{3}-blend{4}-edge{5}{6}{7}{8}.jpg".format(
+  output = "{0}-{1}-hd-fusion-{2}x{3}-blend{4}{5}{6}{7}{8}.jpg".format(
       get_nice_name(content_image_path),
       get_nice_name(style_image_path),
       cols, 
       rows,
       int(10*content_blending_ratio),
-      edge_size,
+      "-edge{0}".format(edge_size) if edge_size > 0 else "",
       "-tiled" if use_tiled_style_image else "",
       "-fluid{0}-sq{1}".format(magnitude, squeeze) if use_fluid_blend else "",
       extra_id
@@ -347,9 +347,9 @@ def run(
     rows=1,
     use_tiled_style_image=False,
     use_fluid_blend=True,
-    edge_size=8,
-    magnitude=60,
-    squeeze=0,
+    edge_size=0,
+    magnitude=30,
+    squeeze=96,
     content_blending_ratio=0.5,
     content_blending_ratios=[],
     **kwargs
@@ -357,6 +357,8 @@ def run(
   config = dict(cols=cols, rows=rows, edge_size=edge_size, squeeze=squeeze,
                 magnitude=magnitude, content_size=CONTENT_SIZE, style_size=STYLE_SIZE)
   config = SimpleNamespace(**config)
+  print("content: {0}, style: {1}".format(content_image_path, style_image_path))
+  print(config)
 
   if len(content_blending_ratios) == 0:
     content_blending_ratios = [content_blending_ratio]
@@ -392,6 +394,7 @@ def run(
   # loop for crankin out more blends
   for content_blending_ratio in content_blending_ratios:
     content_blending_ratio = float(content_blending_ratio)
+    print("content blend:", content_blending_ratio)
     if use_tiled_style_image:
       stylized_pieces = list(map(lambda x, y, z: stylize(
           x, y, z, content_blending_ratio), preprocessed_content_pieces, style_bottlenecks, style_bottleneck_contents))

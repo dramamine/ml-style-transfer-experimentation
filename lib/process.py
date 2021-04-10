@@ -13,8 +13,9 @@ if not os.path.isdir(output_directory):
   os.mkdir(output_directory)
 
 def does_file_already_exist(params):
-  filename = sxu.get_output_filename(**row)
-  return os.path.isfile(output_directory+filename)
+  return False
+  # filename = sxu.get_output_filename(**row)
+  # return os.path.isfile(output_directory+filename)
 
 def get_nums(s):
   valids = []
@@ -29,43 +30,43 @@ def generate_stupid_hash(x, y):
   nums = get_nums(hexy[20:30])
   return "{0}-{1}".format(nums, hex_string)
 
-def add_defaults(data):
-  data['output_directory'] = output_directory
-  if not data['cols']:
-    data['cols'] = 1
-  else:
-    data['cols'] = int(data['cols'])
-  if not data['rows']:
-    data['rows'] = 1 
-  else:
-    data['rows'] = int(data['rows'])
+  def add_defaults(data):
+    data['output_directory'] = output_directory
+    if not data['cols']:
+      data['cols'] = 1
+    else:
+      data['cols'] = int(data['cols'])
+    if not data['rows']:
+      data['rows'] = 1 
+    else:
+      data['rows'] = int(data['rows'])
 
-  data['use_tiled_style_image'] = data['use_tiled_style_image'] == "True"
-  data['use_fluid_blend'] = not data['use_fluid_blend'] == "False"
-  if not data['edge_size']:
-    data['edge_size'] = 8 
-  else:
-    data['edge_size'] = int(data['edge_size'])
+    data['use_tiled_style_image'] = data['use_tiled_style_image'] == "True"
+    data['use_fluid_blend'] = not data['use_fluid_blend'] == "False"
+    if not data['edge_size']:
+      data['edge_size'] = 0
+    else:
+      data['edge_size'] = int(data['edge_size'])
 
-  if not data['magnitude']:
-    data['magnitude'] = 2
-  else:
-    data['magnitude'] = int(data['magnitude'])
+    if not data['magnitude']:
+      data['magnitude'] = 30
+    else:
+      data['magnitude'] = int(data['magnitude'])
 
-  if not data['squeeze']:
-    data['squeeze'] = 0
-  else:
-    data['squeeze'] = int(data['squeeze'])
-  # if not data['content_blending_ratio']:
-  #   data['content_blending_ratio'] = 0.5
-  # else:
-  #   data['content_blending_ratio'] = float(data['content_blending_ratio'])
+    if not data['squeeze']:
+      data['squeeze'] = 96
+    else:
+      data['squeeze'] = int(data['squeeze'])
+    # if not data['content_blending_ratio']:
+    #   data['content_blending_ratio'] = 0.5
+    # else:
+    #   data['content_blending_ratio'] = float(data['content_blending_ratio'])
 
-  # do arrays
-  data['content_image_paths'] = as_array(data['content_image_path'])
-  data['style_image_paths'] = as_array(data['style_image_path'])
-  data['content_blending_ratios'] = as_array(data['content_blending_ratio'])
-  return data
+    # do arrays
+    data['content_image_paths'] = as_array(data['content_image_path'])
+    data['style_image_paths'] = as_array(data['style_image_path'])
+    data['content_blending_ratios'] = as_array(data['content_blending_ratio'])
+    return data
 
 def as_array(msg):
   if isinstance(msg, str) and '[' in msg:
